@@ -38,30 +38,35 @@ func (p *Parser) error(format string, args ...interface{}) {
 	}
 }
 
-func (p *Parser) expect(kind lexer.TokenType, values ...string) {
+func (p *Parser) expect(kind lexer.TokenType, values ...string) bool {
 	if p.curToken.Is(kind, values...) {
-		return
+		return true
 	}
 	p.error("Неожиданный токен и значение %v", p.curToken)
+	return false
 }
 
-func (p *Parser) expectTokenValues(values ...string) {
+func (p *Parser) expectTokenValues(values ...string) bool {
 	if p.curToken.IsValue(values...) {
-		return
+		return true
 	}
 	p.error("Неожиданное значение %v", p.curToken)
+	return false
 }
 
-func (p *Parser) expectTokens(kinds ...lexer.TokenType) {
+func (p *Parser) expectTokens(kinds ...lexer.TokenType) bool {
 	if p.curToken.IsToken(kinds...) {
-		return
+		return true
 	}
 	p.error("Неожиданный токен %v", p.curToken)
+	return false
 }
 
 //NextToken - Получение следующего токена
 func (p *Parser) NextToken() *lexer.Token {
-	p.curToken = p.l.NextToken()
+	if p.curToken == nil || p.curToken.Type != lexer.TokenEOF {
+		p.curToken = p.l.NextToken()
+	}
 	return p.curToken
 }
 
@@ -71,135 +76,59 @@ func (p *Parser) Parse() (tree *ast.Tree, err error) {
 
 	p.NextToken()
 	for p.curToken.Type != lexer.TokenEOF && p.err == nil {
-		switch p.curToken.Type {
-		case lexer.TokenEOF:
-			break
-		case lexer.TokenEnd:
+		node := p.parsePrimary()
+		if p.err == nil && !isNil(node) {
+			tree.AddNode(node)
 			p.NextToken()
-		default:
-			node := p.parsePrimary()
-			if p.err != nil {
-				err = p.err
-				return
-			} else {
-				tree.AddNode(node)
-			}
 		}
+	}
+	if p.err != nil {
+		err = p.err
 	}
 	return
 }
 
 func (p *Parser) parsePrimary() (node ast.Node) {
-	p.expect(lexer.TokenIdentifier)
-	if p.err != nil {
-		return nil
-	}
-	if p.curToken.IsValue("Перем", "Var") {
-		p.NextToken()
-
-		p.expect(lexer.TokenIdentifier)
-		if p.err != nil {
-			return nil
-		}
-
-		val := ast.NewVariableNode(p.curToken.Value, ast.NewBaseNode(ast.Undefined, p.curToken.Position))
-		val.SetLocation(p.curToken.Position)
-
-		p.NextToken()
-		if p.curToken.Type == lexer.TokenIdentifier {
-			p.expect(lexer.TokenIdentifier, "Экспорт", "Export")
-			if p.err != nil {
-				return nil
-			}
-			val.Export = true
-			p.NextToken()
-		}
-		node = val
-	} else {
-		name := p.curToken.Value
-		loc := p.curToken.Position
-		p.NextToken()
-
-		p.expect(lexer.TokenOperator, "=", "(")
-		if p.err != nil {
-			return nil
-		}
-
-		if p.curToken.Value == "=" {
-			p.NextToken()
-			val := p.parsePrimaryExpression()
-			if p.err != nil {
-				return nil
-			}
-			node = ast.NewVariableNode(name, val)
-			node.SetLocation(loc)
-		} else {
-			//Это процедура или функция
-			p.NextToken()
-
-		}
+	if !p.expectTokens(lexer.TokenIdentifier) {
+		return
 	}
 
-	if p.curToken.Type != lexer.TokenEOF {
-		p.expect(lexer.TokenEnd, ";")
-	}
-	return node
-}
+	if p.curToken.Is(lexer.TokenIdentifier, "IF", "ЕСЛИ") {
 
-func (p *Parser) parsePrimaryExpression() (node ast.Node) {
-	var err error
-	switch p.curToken.Type {
+	} else if p.curToken.Is(lexer.TokenIdentifier, "FUNCTION", "ФУНКЦИЯ") {
 
-	case lexer.TokenIdentifier:
-		if p.curToken.IsValue("Истина", "Ложь", "True", "False") {
-			node, err = ast.NewBoolNode(p.curToken.Value)
-			if err != nil {
-				p.error(err.Error())
-				return
-			}
-			node.SetLocation(p.curToken.Position)
-			p.NextToken()
-			return
-		} else if p.curToken.IsValue("Неопределено", "Undefined, Null") {
-			node = ast.NewBaseNode(ast.Undefined, p.curToken.Position)
-			p.NextToken()
+	} else if p.curToken.Is(lexer.TokenIdentifier, "PROCEDURE", "ПРОЦЕДУРА") {
+
+	} else if p.curToken.Is(lexer.TokenIdentifier, "VAR", "ПЕРЕМ") {
+		p.NextToken()
+		if !p.expectTokens(lexer.TokenIdentifier) {
 			return
 		}
-		//node = p.parseIdentifierExpression()
-	case lexer.TokenNumber:
-		node, err = ast.NewNumberNode(p.curToken.Value)
-		if err != nil {
-			p.error(err.Error())
-			return
-		}
+		node = ast.NewVariableNode(p.curToken.Value, ast.NewBaseNode(ast.Undefined, p.curToken.Position))
 		node.SetLocation(p.curToken.Position)
 		p.NextToken()
-		return node
-	case lexer.TokenString:
-		node = ast.NewStringNode(p.curToken.Value)
-		node.SetLocation(p.curToken.Position)
+		if p.curToken.Type != lexer.TokenEOF {
+			p.expect(lexer.TokenSyntax, ";")
+		}
+		return
+	} else if p.curToken.Is(lexer.TokenIdentifier, "RETURN", "ВОЗВРАТ") {
 		p.NextToken()
-		return node
-	case lexer.TokenDate:
-		node, err = ast.NewDateNode(p.curToken.Value)
-		if err != nil {
-			p.error(err.Error())
+		if p.curToken.Type != lexer.TokenEOF || p.curToken.Is(lexer.TokenSyntax, ";") {
+			node = ast.NewReturnNode(ast.NewBaseNode(ast.Undefined, p.curToken.Position))
 			return
 		}
-		node.SetLocation(p.curToken.Position)
+		node = ast.NewReturnNode(p.parseExpression())
+		return
+	} else if p.curToken.Is(lexer.TokenIdentifier, "CONTINUE", "ПРОДОЛЖИТЬ") {
+		node = ast.NewBaseNode(ast.Continue, p.curToken.Position)
 		p.NextToken()
-		return node
-	default:
-		/*
-			if token.Is(Bracket, "[") {
-				node = p.parseArrayExpression(token)
-			} else if token.Is(Bracket, "{") {
-				node = p.parseMapExpression(token)
-			} else {
-				p.error("unexpected token %v", token)
-			}
-		*/
+		if !p.expect(lexer.TokenSyntax, ";") {
+			node = nil
+			return
+		}
+		return
 	}
-	return nil
-	//return p.parsePostfixExpression(node)
+
+	node = p.parseExpressionStatement()
+	return
 }

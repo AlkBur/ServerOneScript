@@ -8,7 +8,12 @@ func (l *Lexer) scanOperator() bool {
 	l.position = l.stream.Position()
 
 	switch l.lastRune {
-	case '+', '-', '*', '%', ',', '.', '(', ')', '[', ']', '=':
+	case ',', '.', '(', ')', '[', ']', ';':
+		l.content.WriteRune(l.lastRune)
+		l.lastRune, l.err = l.stream.Next()
+		l.emit(TokenSyntax)
+		return true
+	case '+', '-', '*', '%', '=':
 		l.content.WriteRune(l.lastRune)
 		l.lastRune, l.err = l.stream.Next()
 		l.emit(TokenOperator)
@@ -22,16 +27,6 @@ func (l *Lexer) scanOperator() bool {
 			l.lastRune, l.err = l.stream.Next()
 		}
 		l.emit(TokenOperator)
-		return true
-	case ';':
-		last := l.lastRune
-		l.content.WriteRune(l.lastRune)
-		l.lastRune, l.err = l.stream.Next()
-		if (l.lastRune == '=') || (last == '<' && l.lastRune == '>') {
-			l.content.WriteRune(l.lastRune)
-			l.lastRune, l.err = l.stream.Next()
-		}
-		l.emit(TokenEnd)
 		return true
 	}
 	return false

@@ -297,37 +297,37 @@ func Test_Operators_Lexer_State(t *testing.T) {
 
 	token = lex.NextToken()
 	if assert.NotNil(token) {
-		assert.Equal(token.Type, TokenOperator)
+		assert.Equal(token.Type, TokenSyntax)
 		assert.Equal(",", token.Value)
 	}
 
 	token = lex.NextToken()
 	if assert.NotNil(token) {
-		assert.Equal(token.Type, TokenOperator)
+		assert.Equal(token.Type, TokenSyntax)
 		assert.Equal(".", token.Value)
 	}
 
 	token = lex.NextToken()
 	if assert.NotNil(token) {
-		assert.Equal(token.Type, TokenOperator)
+		assert.Equal(token.Type, TokenSyntax)
 		assert.Equal("(", token.Value)
 	}
 
 	token = lex.NextToken()
 	if assert.NotNil(token) {
-		assert.Equal(token.Type, TokenOperator)
+		assert.Equal(token.Type, TokenSyntax)
 		assert.Equal(")", token.Value)
 	}
 
 	token = lex.NextToken()
 	if assert.NotNil(token) {
-		assert.Equal(token.Type, TokenOperator)
+		assert.Equal(token.Type, TokenSyntax)
 		assert.Equal("[", token.Value)
 	}
 
 	token = lex.NextToken()
 	if assert.NotNil(token) {
-		assert.Equal(token.Type, TokenOperator)
+		assert.Equal(token.Type, TokenSyntax)
 		assert.Equal("]", token.Value)
 	}
 }

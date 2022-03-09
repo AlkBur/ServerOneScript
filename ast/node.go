@@ -219,12 +219,14 @@ type BinaryNode struct {
 	Right    Node
 }
 
-func NewBinaryNode(operator string) *BinaryNode {
+func NewBinaryNode(operator string, left, right Node) *BinaryNode {
 	return &BinaryNode{
 		BaseNode: BaseNode{
 			nodeType: BinaryOperation,
 		},
 		Operator: operator,
+		Left:     left,
+		Right:    right,
 	}
 }
 
@@ -256,12 +258,13 @@ func (n *BinaryNode) Equal(node Node) bool {
 	return false
 }
 
-// VariableNode - Класс узла переменной.
+// VariableNode - Класс определения переменной.
 type VariableNode struct {
 	BaseNode
-	Name   string
-	Value  Node
-	Export bool
+	Name     string
+	Value    Node
+	IsExport bool
+	IsRef    bool
 }
 
 func NewVariableNode(name string, val Node) *VariableNode {
@@ -284,6 +287,10 @@ func (n *VariableNode) Equal(node Node) bool {
 	if m, ok := node.(*VariableNode); ok {
 		if m.Name != n.Name {
 			return false
+		} else if m.IsExport != n.IsExport {
+			return false
+		} else if m.IsRef != n.IsRef {
+			return false
 		}
 
 		isEmpty := isNil(n.Value)
@@ -291,6 +298,115 @@ func (n *VariableNode) Equal(node Node) bool {
 			return false
 		} else if !isEmpty && !n.Value.Equal(m.Value) {
 			return false
+		}
+		return true
+	}
+	return false
+}
+
+// ReturnNode - Класс определения переменной.
+type ReturnNode struct {
+	BaseNode
+	Value Node
+}
+
+func NewReturnNode(val Node) *ReturnNode {
+	return &ReturnNode{
+		BaseNode: BaseNode{
+			nodeType: Variable,
+		},
+		Value: val,
+	}
+}
+
+func (n *ReturnNode) Equal(node Node) bool {
+	if !n.nodeType.Equal(node.Type()) {
+		return false
+	}
+	if !n.location.Equal(node.Location()) {
+		return false
+	}
+	if m, ok := node.(*ReturnNode); ok {
+		isEmpty := isNil(n.Value)
+		if isNil(m.Value) != isEmpty {
+			return false
+		} else if !isEmpty && !n.Value.Equal(m.Value) {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+// LiteralNode - Класс переменной.
+type LiteralNode struct {
+	BaseNode
+	Name  string
+	IsRef bool
+}
+
+func NewLiteralNode(name string) *LiteralNode {
+
+	return &LiteralNode{
+		BaseNode: BaseNode{
+			nodeType: Literal,
+		},
+		Name: name,
+	}
+}
+
+func (n *LiteralNode) Equal(node Node) bool {
+	if !n.nodeType.Equal(node.Type()) {
+		return false
+	}
+	if !n.location.Equal(node.Location()) {
+		return false
+	}
+	if m, ok := node.(*LiteralNode); ok {
+		if m.Name != n.Name {
+			return false
+		} else if m.IsRef != n.IsRef {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+// FunctionCallNode - Класс вызова.
+type FunctionCallNode struct {
+	BaseNode
+	Name   string
+	Args   []Node
+	Export bool
+}
+
+func NewFunctionCallNode(name string, args []Node) *FunctionCallNode {
+
+	return &FunctionCallNode{
+		BaseNode: BaseNode{
+			nodeType: FunctionCall,
+		},
+		Name: name,
+		Args: args,
+	}
+}
+
+func (n *FunctionCallNode) Equal(node Node) bool {
+	if m, ok := node.(*FunctionCallNode); ok {
+		if !m.BaseNode.Equal(&n.BaseNode) {
+			return false
+		} else if m.Name != n.Name {
+			return false
+		} else if len(n.Args) != len(m.Args) {
+			return false
+		} else if n.Export != m.Export {
+			return false
+		}
+		for i := 0; i < len(n.Args); i++ {
+			if !n.Args[i].Equal(m.Args[i]) {
+				return false
+			}
 		}
 		return true
 	}

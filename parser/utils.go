@@ -35,3 +35,13 @@ func isNil(i interface{}) bool {
 	}
 	return false
 }
+
+/// GetPrecedence - Возвращает приоритет текущего бинарного оператора.
+func GetPrecedence(val string) int {
+	// Удостоверимся, что это объявленный бинарный оператор.
+	TokPrec, ok := binaryOperators[val]
+	if !ok {
+		return -1
+	}
+	return TokPrec
+}

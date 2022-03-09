@@ -60,7 +60,7 @@ const (
 	TokenNumber
 	TokenPreprocessor
 	TokenOperator
-	TokenEnd
+	TokenSyntax
 	TokenEOF
 	TokenError
 )
@@ -77,8 +77,8 @@ func (t TokenType) String() string {
 		return "Preprocessor"
 	case TokenOperator:
 		return "Operator"
-	case TokenEnd:
-		return "End"
+	case TokenSyntax:
+		return "Syntax"
 	case TokenEOF:
 		return "EOF"
 	case TokenError:

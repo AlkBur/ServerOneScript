@@ -7,14 +7,19 @@ const (
 	Bool
 	Number
 	Array
-	Func
+	Function
+	FunctionCall
+	ProcedureCall
 	Map
 	String
 	Struct
 	BinaryOperation
 	Variable
+	Literal
 	Date
 	Undefined
+	Continue
+	Null
 )
 
 func (t Kind) Equal(k Kind) bool {
