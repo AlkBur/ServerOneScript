@@ -313,7 +313,7 @@ type ReturnNode struct {
 func NewReturnNode(val Node) *ReturnNode {
 	return &ReturnNode{
 		BaseNode: BaseNode{
-			nodeType: Variable,
+			nodeType: Return,
 		},
 		Value: val,
 	}

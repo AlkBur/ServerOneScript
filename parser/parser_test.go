@@ -151,6 +151,13 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			`return 3`,
+			&ast.ReturnNode{
+				BaseNode: *ast.NewBaseNode(ast.Return, runes.NewLocation(1, 1)),
+				Value:    &ast.NumberNode{Value: decimal.NewFromInt(3), BaseNode: *ast.NewBaseNode(ast.Number, runes.NewLocation(1, 8))},
+			},
+		},
 
 		/*
 			На будушее

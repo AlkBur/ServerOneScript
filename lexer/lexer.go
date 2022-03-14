@@ -177,3 +177,7 @@ func (l *Lexer) BindError(err *runes.Error) error {
 func (l *Lexer) GetCodeLine(num int) string {
 	return l.stream.StringLine(num)
 }
+
+func (l *Lexer) Source() *runes.Source {
+	return l.stream
+}

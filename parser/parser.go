@@ -72,7 +72,7 @@ func (p *Parser) NextToken() *lexer.Token {
 
 //Parse - Получение дерева AST
 func (p *Parser) Parse() (tree *ast.Tree, err error) {
-	tree = ast.New()
+	tree = ast.New(p.l.Source())
 
 	p.NextToken()
 	for p.curToken.Type != lexer.TokenEOF && p.err == nil {
@@ -112,12 +112,15 @@ func (p *Parser) parsePrimary() (node ast.Node) {
 		}
 		return
 	} else if p.curToken.Is(lexer.TokenIdentifier, "RETURN", "ВОЗВРАТ") {
+		loc := p.curToken.Position
 		p.NextToken()
-		if p.curToken.Type != lexer.TokenEOF || p.curToken.Is(lexer.TokenSyntax, ";") {
+		if p.curToken.Type == lexer.TokenEOF || p.curToken.Is(lexer.TokenSyntax, ";") {
 			node = ast.NewReturnNode(ast.NewBaseNode(ast.Undefined, p.curToken.Position))
+			node.SetLocation(loc)
 			return
 		}
 		node = ast.NewReturnNode(p.parseExpression())
+		node.SetLocation(loc)
 		return
 	} else if p.curToken.Is(lexer.TokenIdentifier, "CONTINUE", "ПРОДОЛЖИТЬ") {
 		node = ast.NewBaseNode(ast.Continue, p.curToken.Position)

@@ -19,6 +19,7 @@ const (
 	Date
 	Undefined
 	Continue
+	Return
 	Null
 )
 
